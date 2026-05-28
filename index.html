@@ -165,16 +165,15 @@
 
 @keyframes stemGrow { from { opacity:0; transform:scaleY(.15);} to { opacity:1; transform:scaleY(1);} }
   @keyframes bloomIn { from { opacity:0; transform:scale(.1);} to { opacity:1; transform:scale(1);} }
-
-  .envelope-stage { display: flex; justify-content: center; align-items: center; min-height: 70vh; }
+.envelope-stage { display: flex; justify-content: center; align-items: center; min-height: 70vh; }
   .reveal-card { animation: cardRise .8s .15s cubic-bezier(.2,.9,.25,1) both; }
   @keyframes cardRise { from { opacity:0; transform: translateY(40px) scale(.94); } to { opacity:1; transform: translateY(0) scale(1); } }
   .envelope { width: 320px; height: 210px; position: relative; cursor: pointer; perspective: 900px; filter: drop-shadow(0 18px 40px rgba(74,87,89,0.4)); }
   .env-body { position: absolute; inset: 0; background: linear-gradient(160deg,#fff6ef,#f4e3d8); border-radius: 8px; border:1px solid rgba(74,87,89,0.18); }
-  .env-flap { position: absolute; top: 0; left: 0; width: 100%; height: 0; border-left: 160px solid transparent; border-right: 160px solid transparent; border-top: 118px solid var(--cherry); transform-origin: top center; transition: transform .7s cubic-bezier(.4,0,.2,1); z-index: 4; }
+  .env-flap { position: absolute; top: 0; left: 0; width: 100%; height: 0; border-left: 160px solid transparent; border-right: 160px solid transparent; border-top: 118px solid #edafb8; transform-origin: top center; transition: transform .7s cubic-bezier(.4,0,.2,1); z-index: 4; }
   .env-pocket { position: absolute; bottom: 0; left: 0; width: 100%; height: 60%; background: linear-gradient(160deg,#f4e3d8,#e9d4c6); border-radius: 0 0 8px 8px; z-index: 5; clip-path: polygon(0 38%, 50% 100%, 100% 38%, 100% 100%, 0 100%); }
-  .env-seal { position: absolute; top: 92px; left: 50%; transform: translateX(-50%); width: 44px; height: 44px; border-radius: 50%; background: var(--iron); color: #fff9f4; display:flex; align-items:center; justify-content:center; font-family:'Pinyon Script',cursive; font-size: 26px; z-index: 6; box-shadow: 0 4px 10px rgba(74,87,89,0.4); transition: opacity .3s; }
-  .env-hint { position: absolute; bottom: -34px; left: 0; right: 0; text-align: center; font-family:'Oswald',sans-serif; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--iron); opacity: .6; }
+  .env-seal { position: absolute; top: 92px; left: 50%; transform: translateX(-50%); width: 44px; height: 44px; border-radius: 50%; background: #4a5759; color: #fff9f4; display:flex; align-items:center; justify-content:center; font-family:'Pinyon Script',cursive; font-size: 26px; z-index: 6; box-shadow: 0 4px 10px rgba(74,87,89,0.4); transition: opacity .3s; }
+  .env-hint { position: absolute; bottom: -34px; left: 0; right: 0; text-align: center; font-family:'Oswald',sans-serif; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #4a5759; opacity: .6; }
   .envelope.open .env-flap { transform: rotateX(180deg); z-index: 1; }
   .envelope.open .env-seal { opacity: 0; pointer-events: none; }
   .envelope.open .env-hint { opacity: 0; }
@@ -843,17 +842,20 @@ function photostripEl(photos, editable, accent) {
       });
     } else { rv.appendChild(cardEl(false)); }
   }
-
-  function renderAll() {
- if (FROZEN) {
-      // receiver opened a shared link: show ONLY the card, hide editor + subtitle
-      document.querySelector(".modes").classList.add("hidden");
-      document.getElementById("view-editor").classList.add("hidden");
-      document.getElementById("view-widget").classList.add("hidden");
+function renderAll() {
+    if (FROZEN) {
+      // receiver opened a shared link: nuke the editor UI from the DOM so it
+      // can't be re-shown by any means (DevTools, browser extensions, etc.)
+      const modes = document.querySelector(".modes");
+      if (modes && modes.parentNode) modes.parentNode.removeChild(modes);
+      const ve = document.getElementById("view-editor");
+      if (ve && ve.parentNode) ve.parentNode.removeChild(ve);
+      const vw = document.getElementById("view-widget");
+      if (vw && vw.parentNode) vw.parentNode.removeChild(vw);
       const sub = document.getElementById("subtitle");
-      if (sub) sub.classList.add("hidden");           // hide page subtitle
+      if (sub) sub.classList.add("hidden");
       document.getElementById("view-receiver").classList.remove("hidden");
-      renderReceiver(true);                            // play opening animation
+      renderReceiver(true);
       return;
     }
     document.getElementById("view-editor").classList.toggle("hidden", mode !== "editor");
@@ -889,6 +891,7 @@ function photostripEl(photos, editable, accent) {
 // ---------- mode buttons ----------
   // ONLY wire these when the page is in editor (sender) mode.
   // On a receiver link (FROZEN), the buttons are also removed from the DOM below.
+// ---------- mode buttons ----------
   if (!FROZEN) {
     document.querySelectorAll(".modes button").forEach(b => {
       b.addEventListener("click", () => { mode = b.dataset.mode; renderAll(); });
