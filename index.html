@@ -845,13 +845,15 @@ function photostripEl(photos, editable, accent) {
   }
 
   function renderAll() {
-    if (FROZEN) {
+ if (FROZEN) {
+      // receiver opened a shared link: show ONLY the card, hide editor + subtitle
       document.querySelector(".modes").classList.add("hidden");
       document.getElementById("view-editor").classList.add("hidden");
       document.getElementById("view-widget").classList.add("hidden");
-      const sub = document.getElementById("subtitle"); if (sub) sub.classList.add("hidden");
+      const sub = document.getElementById("subtitle");
+      if (sub) sub.classList.add("hidden");           // hide page subtitle
       document.getElementById("view-receiver").classList.remove("hidden");
-      renderReceiver(true);
+      renderReceiver(true);                            // play opening animation
       return;
     }
     document.getElementById("view-editor").classList.toggle("hidden", mode !== "editor");
@@ -884,10 +886,14 @@ function photostripEl(photos, editable, accent) {
     }
   }
 
-  // ---------- mode buttons ----------
-  document.querySelectorAll(".modes button").forEach(b => {
-    b.addEventListener("click", () => { mode = b.dataset.mode; renderAll(); });
-  });
+// ---------- mode buttons ----------
+  // ONLY wire these when the page is in editor (sender) mode.
+  // On a receiver link (FROZEN), the buttons are also removed from the DOM below.
+  if (!FROZEN) {
+    document.querySelectorAll(".modes button").forEach(b => {
+      b.addEventListener("click", () => { mode = b.dataset.mode; renderAll(); });
+    });
+  }
 
   // ---------- share (receiver link) ----------
   function setupShare() {
