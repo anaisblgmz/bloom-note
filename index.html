@@ -50,6 +50,15 @@
   .controls { width: 320px; max-width: 100%; }
   .preview { position: sticky; top: 16px; }
   .preview .caption { text-align: center; margin-top: 12px; font-family: 'Oswald',sans-serif; font-size: 11px; letter-spacing: 1px; color: var(--iron); opacity: .6; }
+  .share-box { margin-top: 18px; display: flex; flex-direction: column; gap: 8px; align-items: center; }
+  .share-btn {
+    padding: 10px 22px; border-radius: 999px; cursor: pointer; font-family: 'Oswald', sans-serif;
+    font-size: 12px; letter-spacing: 1px; text-transform: uppercase; border: 1.5px solid var(--cherry);
+    background: var(--cherry); color: var(--iron); transition: all .15s;
+  }
+  .share-btn:hover { filter: brightness(.96); }
+  .share-btn.copied { background: var(--ash); border-color: var(--ash); }
+  #share-link { font-size: 12px; text-align: center; }
 
   .field { display: block; margin-bottom: 14px; }
   .field > .label { display: block; font-family: 'Oswald', sans-serif; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--iron); opacity: .75; margin-bottom: 5px; }
@@ -285,6 +294,11 @@
     <div class="preview">
       <div id="card-host"></div>
       <div class="caption">live preview · tap the vase to add stems · tap a stem to remove</div>
+      <div class="share-box">
+        <button id="btn-share" class="share-btn">🔗 Copy share link</button>
+        <input id="share-link" class="txt" readonly placeholder="your shareable link appears here" />
+        <div class="hint" style="text-align:center;">Send this link — they'll see the card but can't edit it.</div>
+      </div>
     </div>
   </div>
 
@@ -399,7 +413,22 @@
   };
 
   let mode = "editor";
+  let isShared = false;
   let data = JSON.parse(JSON.stringify(DEFAULT));
+
+  // The app is fully static (no backend), so a shared card travels inside the URL.
+  // We JSON-encode the data object and base64 it (unicode-safe, since notes hold emoji).
+  function encodeCard(d) {
+    return btoa(unescape(encodeURIComponent(JSON.stringify(d))));
+  }
+  function decodeCard(str) {
+    try {
+      const obj = JSON.parse(decodeURIComponent(escape(atob(str))));
+      return (obj && typeof obj === "object") ? obj : null;
+    } catch (e) {
+      return null;
+    }
+  }
 
   function normalizePhotoURL(raw) {
     if (!raw) return "";
@@ -685,6 +714,25 @@
     document.getElementById("btn-undo").addEventListener("click", undoStem);
     document.getElementById("btn-clear").addEventListener("click", clearStems);
 
+    const shareBtn = document.getElementById("btn-share");
+    const shareInput = document.getElementById("share-link");
+    shareBtn.addEventListener("click", () => {
+      const link = location.origin + location.pathname + "#c=" + encodeCard(data);
+      shareInput.value = link;
+      shareInput.focus(); shareInput.select();
+      const done = () => {
+        shareBtn.textContent = "✓ Link copied — share it!";
+        shareBtn.classList.add("copied");
+        setTimeout(() => { shareBtn.textContent = "🔗 Copy share link"; shareBtn.classList.remove("copied"); }, 2200);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(link).then(done, done);
+      } else {
+        try { document.execCommand("copy"); } catch (e) {}
+        done();
+      }
+    });
+
     bindInput("f-occasion", "occasion");
     bindInput("f-receiver", "receiver");
     bindInput("f-sender", "sender");
@@ -798,8 +846,26 @@
     b.addEventListener("click", () => { mode = b.dataset.mode; renderAll(); });
   });
 
-  buildControls();
-  renderAll();
+  // If opened via a shared link, decode the card and lock the page to a view-only experience.
+  if (location.hash.indexOf("#c=") === 0) {
+    const decoded = decodeCard(location.hash.slice(3));
+    if (decoded) {
+      data = Object.assign({}, DEFAULT, decoded);
+      isShared = true;
+      mode = "receiver";
+    }
+  }
+
+  if (isShared) {
+    document.querySelector(".modes").classList.add("hidden");
+    document.getElementById("view-editor").classList.add("hidden");
+    document.getElementById("view-receiver").classList.remove("hidden");
+    document.getElementById("subtitle").textContent = "someone sent you a little something 🌷";
+    renderReceiver();
+  } else {
+    buildControls();
+    renderAll();
+  }
 })();
 </script>
 </body>
