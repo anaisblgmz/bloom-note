@@ -232,6 +232,16 @@
         <span class="label">Photo strip (3)</span>
         <div class="photo-row" id="photo-row"></div>
       </div>
+
+      <div class="field" style="margin-top:18px;border-top:1.5px dashed rgba(74,87,89,0.25);padding-top:16px;">
+        <span class="label">Send to the receiver</span>
+        <div class="hint">Creates a view-only link with this card baked in — they can open it but can't edit.</div>
+        <button id="btn-share" style="width:100%;padding:11px;border:none;border-radius:8px;background:var(--iron);color:#fff9f4;font-family:'Oswald',sans-serif;font-size:12px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;">🔗 Create receiver link</button>
+        <div id="share-out" class="hidden" style="margin-top:10px;">
+          <textarea id="share-link" class="txt" readonly style="font-style:normal;font-size:12px;min-height:64px;font-family:'Oswald',sans-serif;"></textarea>
+          <div id="share-status" style="font-family:'Lora',serif;font-style:italic;font-size:12px;color:var(--iron);opacity:.75;margin-top:6px;"></div>
+        </div>
+      </div>
     </div>
 
     <div class="preview">
@@ -404,8 +414,32 @@
   };
 
   // ---------- state ----------
-  let mode = "editor";
-  let data = load() || JSON.parse(JSON.stringify(DEFAULT));
+  // If the URL carries a card (#view=...), we're the RECEIVER: read-only, no editor.
+  const SHARED = readSharedFromURL();
+  const FROZEN = !!SHARED;            // receiver links can't be edited
+  let mode = FROZEN ? "receiver" : "editor";
+  let data = SHARED || load() || JSON.parse(JSON.stringify(DEFAULT));
+
+  // Decode a card object from the URL hash, if present.
+  function readSharedFromURL() {
+    try {
+      const h = location.hash || "";
+      const m = h.match(/(?:^#|[#&])view=([^&]+)/);
+      if (!m) return null;
+      const json = decodeURIComponent(escape(atob(decodeURIComponent(m[1]).replace(/-/g, "+").replace(/_/g, "/"))));
+      const d = JSON.parse(json);
+      if (!d || !Array.isArray(d.stems)) return null;
+      if (!Array.isArray(d.photos)) d.photos = [null, null, null];
+      return d;
+    } catch (e) { return null; }
+  }
+
+  // Encode the current card into a URL-safe string for a receiver link.
+  function encodeShare() {
+    const json = JSON.stringify(data);
+    const b64 = btoa(unescape(encodeURIComponent(json))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+    return location.origin + location.pathname + "#view=" + b64;
+  }
 
   function load() {
     try {
@@ -418,9 +452,11 @@
     } catch (e) { return null; }
   }
   function save() {
+    if (FROZEN) return; // never persist or mutate when viewing someone's card
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch (e) {}
   }
-  function set(k, v) { data[k] = v; save(); renderAll(); }
+  function set(k, v) { if (FROZEN) return; data[k] = v; save(); renderAll(); }
+
 
   // ---------- bouquet building ----------
   function addStem() {
@@ -743,6 +779,18 @@
     host.innerHTML = ""; host.appendChild(cardEl(true));
   }
   function renderAll() {
+    // Receiver opened a shared link: show ONLY the card, hide every editor control.
+    if (FROZEN) {
+      document.querySelector(".modes").classList.add("hidden");
+      document.getElementById("view-editor").classList.add("hidden");
+      document.getElementById("view-widget").classList.add("hidden");
+      const rv = document.getElementById("view-receiver");
+      rv.classList.remove("hidden");
+      const h = document.getElementById("card-host-receiver");
+      h.innerHTML = ""; h.appendChild(cardEl(false));
+      return;
+    }
+
     // mode visibility
     document.getElementById("view-editor").classList.toggle("hidden", mode !== "editor");
     document.getElementById("view-receiver").classList.toggle("hidden", mode !== "receiver");
@@ -768,19 +816,87 @@
   fileInput.addEventListener("change", (e) => {
     const f = e.target.files && e.target.files[0]; if (!f) return;
     const r = new FileReader();
-    r.onload = () => { data.photos[activeSlot] = r.result; save(); renderAll(); };
+    r.onload = () => { downscalePhoto(r.result, (small) => { data.photos[activeSlot] = small; save(); renderAll(); }); };
     r.readAsDataURL(f);
   });
+
+  // Resize a photo to a small JPEG so it travels comfortably inside the share link.
+  function downscalePhoto(dataUrl, cb) {
+    const img = new Image();
+    img.onload = () => {
+      const MAX = 520; // longest edge
+      let { width: w, height: h } = img;
+      if (w > h && w > MAX) { h = Math.round(h * MAX / w); w = MAX; }
+      else if (h >= w && h > MAX) { w = Math.round(w * MAX / h); h = MAX; }
+      const c = document.createElement("canvas");
+      c.width = w; c.height = h;
+      c.getContext("2d").drawImage(img, 0, 0, w, h);
+      try { cb(c.toDataURL("image/jpeg", 0.72)); }
+      catch (err) { cb(dataUrl); }
+    };
+    img.onerror = () => cb(dataUrl);
+    img.src = dataUrl;
+  }
 
   // ---------- mode buttons ----------
   document.querySelectorAll(".modes button").forEach(b => {
     b.addEventListener("click", () => { mode = b.dataset.mode; renderAll(); });
   });
 
+  // ---------- share (receiver link) ----------
+  function setupShare() {
+    const btn = document.getElementById("btn-share");
+    if (!btn) return;
+    btn.addEventListener("click", () => {
+      const url = encodeShare();
+      const out = document.getElementById("share-out");
+      const box = document.getElementById("share-link");
+      const status = document.getElementById("share-status");
+      out.classList.remove("hidden");
+      box.value = url;
+      box.focus(); box.select();
+
+      const len = url.length;
+      let warn = "";
+      if (len > 8000) warn = " ⚠️ This link is very long (large photos) — some apps may cut it off. Try smaller photos.";
+      else if (len > 2000) warn = " (Fairly long, but should work in Messages, Mail, and WhatsApp.)";
+
+      const finish = (ok) => {
+        status.textContent = (ok ? "Copied to clipboard! " : "Select the text above and copy it. ") +
+          "Send it to the receiver — opening it shows the card with no editing." + warn;
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(() => finish(true)).catch(() => finish(false));
+      } else {
+        try { document.execCommand("copy"); finish(true); } catch (e) { finish(false); }
+      }
+    });
+  }
+
   // ---------- boot ----------
-  buildControls();
+  if (!FROZEN) { buildControls(); setupShare(); }
   renderAll();
 })();
 </script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
