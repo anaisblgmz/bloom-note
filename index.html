@@ -88,9 +88,11 @@
   .build-actions .ghost { border: 1.5px solid rgba(74,87,89,0.3); background: #fffdf8; color: var(--iron); }
   .build-actions .ghost:disabled { cursor: not-allowed; opacity: .5; }
 
-  .photo-row { display: flex; gap: 8px; }
-  .photo-btn { flex: 1; padding: 10px 4px; border-radius: 8px; cursor: pointer; border: 1.5px dashed rgba(74,87,89,0.4); background: #fffdf8; color: var(--iron); font-family: 'Oswald',sans-serif; font-size: 11px; }
-  .photo-btn.has { background: var(--ash); }
+.photo-row { display: flex; flex-direction: column; gap: 8px; }
+  .photo-link { display: flex; gap: 8px; align-items: center; }
+  .photo-link input.txt { flex: 1; font-style: normal; font-size: 12px; }
+  .photo-link .thumb { flex: none; width: 38px; height: 38px; border-radius: 6px; border: 1.5px dashed rgba(74,87,89,0.35); background: #fffdf8 center/cover no-repeat; display: flex; align-items: center; justify-content: center; font-family: 'Oswald',sans-serif; font-size: 12px; color: var(--iron); opacity: .7; }
+  .photo-link .thumb.has { border-style: solid; border-color: var(--ash); opacity: 1; }
 
   /* stem mask element */
   .stem {
@@ -101,12 +103,9 @@
   }
 
   /* the card */
-  .card {
+ .card {
     width: 340px; border-radius: 10px; padding: 30px 26px 34px; position: relative; overflow: hidden;
     box-shadow: 0 18px 50px rgba(74,87,89,0.35);
-    background-image:
-      radial-gradient(circle at 22% 18%, rgba(255,255,255,0.5), transparent 45%),
-      repeating-linear-gradient(0deg, rgba(74,87,89,0.04) 0 1px, transparent 1px 26px);
   }
   .card .inner-border { position: absolute; inset: 9px; border-radius: 6px; pointer-events: none; }
   .card .occasion { font-family: var(--body); font-size: 11px; letter-spacing: 3px; text-transform: uppercase; opacity: .7; text-align: center; }
@@ -121,7 +120,8 @@
   .bouquet .stems { position: absolute; inset: 0; }
   .bouquet .stem-wrap { position: absolute; transform-origin: bottom center; }
   .bouquet .stem-grow { transform-origin: bottom center; animation: stemGrow .5s cubic-bezier(.2,1.2,.35,1) both; }
-  .bouquet svg.vase { position: absolute; inset: 0; pointer-events: none; }
+  .bouquet .tie { position: absolute; left: 50%; bottom: 40px; width: 26px; height: 26px; border-radius: 50%; transform: translateX(-50%); background: rgba(74,87,89,0.18); pointer-events: none; }
+  .bouquet .tie::before { content: ""; position: absolute; left: 50%; top: 50%; width: 14px; height: 14px; border-radius: 50%; transform: translate(-50%,-50%); background: rgba(255,255,255,0.4); }
   .bouquet .tap {
     position: absolute; inset: 0; width: 100%; height: 100%; background: transparent;
     border: 2px dashed rgba(74,87,89,0.3); border-radius: 14px; cursor: pointer; color: var(--iron);
@@ -163,8 +163,21 @@
 
   .hidden { display: none !important; }
 
-  @keyframes stemGrow { from { opacity:0; transform:scaleY(.15);} to { opacity:1; transform:scaleY(1);} }
+@keyframes stemGrow { from { opacity:0; transform:scaleY(.15);} to { opacity:1; transform:scaleY(1);} }
   @keyframes bloomIn { from { opacity:0; transform:scale(.1);} to { opacity:1; transform:scale(1);} }
+
+  .envelope-stage { display: flex; justify-content: center; align-items: center; min-height: 70vh; }
+  .reveal-card { animation: cardRise .8s .15s cubic-bezier(.2,.9,.25,1) both; }
+  @keyframes cardRise { from { opacity:0; transform: translateY(40px) scale(.94); } to { opacity:1; transform: translateY(0) scale(1); } }
+  .envelope { width: 320px; height: 210px; position: relative; cursor: pointer; perspective: 900px; filter: drop-shadow(0 18px 40px rgba(74,87,89,0.4)); }
+  .env-body { position: absolute; inset: 0; background: linear-gradient(160deg,#fff6ef,#f4e3d8); border-radius: 8px; border:1px solid rgba(74,87,89,0.18); }
+  .env-flap { position: absolute; top: 0; left: 0; width: 100%; height: 0; border-left: 160px solid transparent; border-right: 160px solid transparent; border-top: 118px solid var(--cherry); transform-origin: top center; transition: transform .7s cubic-bezier(.4,0,.2,1); z-index: 4; }
+  .env-pocket { position: absolute; bottom: 0; left: 0; width: 100%; height: 60%; background: linear-gradient(160deg,#f4e3d8,#e9d4c6); border-radius: 0 0 8px 8px; z-index: 5; clip-path: polygon(0 38%, 50% 100%, 100% 38%, 100% 100%, 0 100%); }
+  .env-seal { position: absolute; top: 92px; left: 50%; transform: translateX(-50%); width: 44px; height: 44px; border-radius: 50%; background: var(--iron); color: #fff9f4; display:flex; align-items:center; justify-content:center; font-family:'Pinyon Script',cursive; font-size: 26px; z-index: 6; box-shadow: 0 4px 10px rgba(74,87,89,0.4); transition: opacity .3s; }
+  .env-hint { position: absolute; bottom: -34px; left: 0; right: 0; text-align: center; font-family:'Oswald',sans-serif; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--iron); opacity: .6; }
+  .envelope.open .env-flap { transform: rotateX(180deg); z-index: 1; }
+  .envelope.open .env-seal { opacity: 0; pointer-events: none; }
+  .envelope.open .env-hint { opacity: 0; }
 
   @media (max-width: 700px) {
     .editor { flex-direction: column; align-items: center; }
@@ -176,7 +189,7 @@
 <div class="wrap">
   <div class="title">
     <h1>Bloom &amp; Note</h1>
-    <p>a handmade card, just for them</p>
+<p id="subtitle">a handmade card, just for them</p>
   </div>
 
   <div class="modes">
@@ -206,9 +219,17 @@
         <div id="font-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:7px;"></div>
       </div>
 
-      <div class="field">
+ <div class="field">
         <span class="label">Card colour</span>
         <div class="bgrow" id="bg-row"></div>
+      </div>
+
+      <div class="field">
+        <span class="label">Name colours</span>
+        <div class="group-label">Receiver name (To)</div>
+        <div class="swatches" id="receiver-color-row" style="margin-bottom:10px;"></div>
+        <div class="group-label">Sender name (From)</div>
+        <div class="swatches" id="sender-color-row"></div>
       </div>
 
       <div class="field">
@@ -228,8 +249,9 @@
         <button class="ghost" id="btn-clear">✕ Clear</button>
       </div>
 
-      <div class="field">
-        <span class="label">Photo strip (3)</span>
+  <div class="field">
+        <span class="label">Photo strip (3) — paste image links</span>
+        <div class="hint">Paste a direct image link (Imgur, or any URL ending in .jpg/.png). Note: Google Photos / Apple Photos *share* pages can't be hot-linked — use a direct image URL.</div>
         <div class="photo-row" id="photo-row"></div>
       </div>
 
@@ -259,7 +281,6 @@
   <div id="view-widget" class="hidden phone-stage"></div>
 </div>
 
-<input type="file" id="file-input" accept="image/*" class="hidden" />
 <script>
 (function () {
   "use strict";
@@ -390,6 +411,7 @@
     {id:"iron",label:"Slate",value:PAL.iron},
   ];
   const PALETTE_OPTIONS = [PAL.cherry, PAL.powder, PAL.dust, PAL.ash, PAL.iron];
+  const TEXT_COLORS = [PAL.iron, PAL.cherry, "#8a5a44", "#c98a2b", PAL.ash, "#fff9f4"];
   const SLOT_COUNT = 9;
   // fan slots radiating from the vase mouth
   const SLOTS = [
@@ -401,9 +423,10 @@
   const DEFAULT = {
     occasion:"Happy Anniversary", receiver:"Ana", sender:"Sam",
     note:"Every petal reminds me of a day spent with you. Here's to many more. 🌷",
-    fontKey:"parisienne", bgKey:"powder",
+fontKey:"parisienne", bgKey:"powder",
     flowerKey:"flower2", stemColor:PAL.iron,
-    photos:[null,null,null],
+    receiverColor:PAL.cherry, senderColor:PAL.cherry,
+    photos:["","",""],
     stems:[
       {assetKey:"green1",color:PAL.ash,slot:1},
       {assetKey:"flower2",color:PAL.cherry,slot:3},
@@ -418,7 +441,12 @@
   const SHARED = readSharedFromURL();
   const FROZEN = !!SHARED;            // receiver links can't be edited
   let mode = FROZEN ? "receiver" : "editor";
-  let data = SHARED || load() || JSON.parse(JSON.stringify(DEFAULT));
+ let data = SHARED || load() || JSON.parse(JSON.stringify(DEFAULT));
+  if (data.receiverColor === undefined) data.receiverColor = PAL.cherry;
+  if (data.senderColor === undefined) data.senderColor = PAL.cherry;
+  if (!Array.isArray(data.photos)) data.photos = ["","",""];
+  data.photos = data.photos.map(p => p || "");
+  function normalizePhotoURL(raw){ if(!raw) return ""; let u=raw.trim(); if(!u) return ""; const im=u.match(/^https?:\/\/(?:www\.)?imgur\.com\/(?:gallery\/|a\/)?([A-Za-z0-9]+)(?:\.[a-z]+)?$/i); if(im) return "https://i.imgur.com/"+im[1]+".jpg"; return u; }
 
   // Decode a card object from the URL hash, if present.
   function readSharedFromURL() {
@@ -499,16 +527,15 @@
   }
 
   // ---------- the bouquet ----------
-  function bouquetEl(stems, editable) {
-    const W = 260, H = 230, vaseX = W/2, vaseTop = 168;
+function bouquetEl(stems, editable) {
+    const W = 260, H = 230, baseX = W/2, gatherTop = 150;
     const wrap = el("div", { class:"bouquet" });
-
     const stemsLayer = el("div", { class:"stems" });
     stems.forEach((s, i) => {
       const p = SLOTS[s.slot] || SLOTS[4];
       const outer = el("div", { class:"stem-wrap" });
-      outer.style.left = (vaseX + p.dx) + "px";
-      outer.style.bottom = (H - vaseTop) + "px";
+      outer.style.left = baseX + "px";
+      outer.style.bottom = (H - gatherTop) + "px";
       outer.style.transform = `translateX(-50%) rotate(${p.r}deg)`;
       if (editable) {
         outer.style.cursor = "pointer";
@@ -522,28 +549,12 @@
       stemsLayer.appendChild(outer);
     });
     wrap.appendChild(stemsLayer);
-
-    // vase (SVG)
-    const ns = "http://www.w3.org/2000/svg";
-    const svg = document.createElementNS(ns, "svg");
-    svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
-    svg.setAttribute("width", W); svg.setAttribute("height", H);
-    svg.setAttribute("class", "vase");
-    const body = document.createElementNS(ns, "path");
-    body.setAttribute("d", `M${vaseX-26} ${vaseTop} C${vaseX-26} ${vaseTop+36} ${vaseX-18} ${vaseTop+46} ${vaseX} ${vaseTop+46} C${vaseX+18} ${vaseTop+46} ${vaseX+26} ${vaseTop+36} ${vaseX+26} ${vaseTop} Z`);
-    body.setAttribute("fill","rgba(74,87,89,0.16)"); body.setAttribute("stroke","#4a5759");
-    body.setAttribute("stroke-width","2.2"); body.setAttribute("stroke-opacity","0.55"); body.setAttribute("stroke-linejoin","round");
-    const rim = document.createElementNS(ns, "ellipse");
-    rim.setAttribute("cx",vaseX); rim.setAttribute("cy",vaseTop); rim.setAttribute("rx","26"); rim.setAttribute("ry","5.5");
-    rim.setAttribute("fill","rgba(255,255,255,0.45)"); rim.setAttribute("stroke","#4a5759"); rim.setAttribute("stroke-width","1.8"); rim.setAttribute("stroke-opacity","0.45");
-    svg.appendChild(body); svg.appendChild(rim);
-    wrap.appendChild(svg);
-
+    if (stems.length) wrap.appendChild(el("div", { class:"tie" }));
     if (editable) {
       const empty = stems.length === 0;
       const full = stems.length >= SLOT_COUNT;
       const tap = el("button", { class:"tap" });
-      tap.textContent = full ? "vase is full 🌸" : (empty ? "tap to add your first stem 🌱" : "+ add stem");
+      tap.textContent = full ? "bouquet is full 🌸" : (empty ? "tap to add your first stem 🌱" : "+ add stem");
       tap.style.opacity = empty ? "0.85" : "0";
       tap.style.cursor = full ? "not-allowed" : "pointer";
       tap.disabled = full;
@@ -558,14 +569,20 @@
   }
 
   // ---------- photostrip ----------
-  function photostripEl(photos, editable, accent) {
+function photostripEl(photos, editable, accent) {
     const strip = el("div", { class:"photostrip" });
     strip.appendChild(el("div", { class:"tape" }));
     [0,1,2].forEach(i => {
-      const f = el("div", { class:"frame" + (photos[i] ? " filled" : "") });
-      if (photos[i]) f.style.backgroundImage = `url(${photos[i]})`;
-      else if (editable) f.innerHTML = "tap to<br>add photo";
-      if (editable) { f.style.cursor = "pointer"; f.addEventListener("click", () => pickPhoto(i)); }
+      const url = normalizePhotoURL(photos[i]);
+      const f = el("div", { class:"frame" + (url ? " filled" : "") });
+      if (url) {
+        f.style.backgroundImage = `url("${url}")`;
+        const probe = new Image();
+        probe.onerror = () => { f.style.backgroundImage = "none"; f.classList.remove("filled"); f.innerHTML = "couldn't<br>load link"; };
+        probe.src = url;
+      } else if (editable) {
+        f.innerHTML = "add a<br>photo link";
+      }
       strip.appendChild(f);
     });
     const cap = el("div", { class:"cap" }); cap.textContent = "♥ us ♥"; cap.style.color = accent;
@@ -594,7 +611,7 @@
     card.appendChild(ib);
 
     const occ = el("div", { class:"occasion" }); occ.textContent = data.occasion || "for someone special";
-    const rcv = el("div", { class:"receiver" }); rcv.textContent = data.receiver || "Dear You"; rcv.style.color = accent;
+    const rcv = el("div", { class:"receiver" }); rcv.textContent = data.receiver || "Dear You"; rcv.style.color = data.receiverColor || accent;
     card.appendChild(occ); card.appendChild(rcv);
 
     card.appendChild(bouquetEl(data.stems, editable));
@@ -606,7 +623,7 @@
 
     const sign = el("div", { class:"sign" });
     const pre = el("span", { class:"pre" }); pre.textContent = "with love, ";
-    const nm = el("span", { class:"name" }); nm.textContent = data.sender || "Me"; nm.style.color = accent;
+    const nm = el("span", { class:"name" }); nm.textContent = data.sender || "Me"; nm.style.color = data.senderColor || accent;
     sign.appendChild(pre); sign.appendChild(nm);
     card.appendChild(sign);
     return card;
@@ -725,14 +742,27 @@
       ink.appendChild(s);
     });
 
-    // photos
+// name colour swatches
+    const rcvRow = document.getElementById("receiver-color-row");
+    const sndRow = document.getElementById("sender-color-row");
+    rcvRow.innerHTML = ""; sndRow.innerHTML = "";
+    TEXT_COLORS.forEach(c => {
+      const a = el("button", { class:"swatch" }); a.style.background = c; a.dataset.rcvcol = c;
+      a.addEventListener("click", () => set("receiverColor", c)); rcvRow.appendChild(a);
+      const b = el("button", { class:"swatch" }); b.style.background = c; b.dataset.sndcol = c;
+      b.addEventListener("click", () => set("senderColor", c)); sndRow.appendChild(b);
+    });
+    // photo link inputs
     const pr = document.getElementById("photo-row");
     pr.innerHTML = "";
     [0,1,2].forEach(i => {
-      const b = el("button", { class:"photo-btn" });
-      b.dataset.photo = i;
-      b.addEventListener("click", () => pickPhoto(i));
-      pr.appendChild(b);
+      const wrapRow = el("div", { class:"photo-link" });
+      const thumb = el("div", { class:"thumb" }); thumb.dataset.thumb = i; thumb.textContent = (i+1);
+      const input = el("input", { class:"txt", placeholder:"https://i.imgur.com/abc123.jpg" });
+      input.dataset.photo = i; input.value = data.photos[i] || "";
+      input.addEventListener("input", () => { data.photos[i] = input.value; save(); renderCardOnly(); syncPhotoThumb(i); });
+      wrapRow.appendChild(thumb); wrapRow.appendChild(input);
+      pr.appendChild(wrapRow);
     });
 
     document.getElementById("btn-add").addEventListener("click", addStem);
@@ -751,6 +781,17 @@
     node.value = data[key] || "";
     node.addEventListener("input", () => { data[key] = node.value; save(); renderCardOnly(); });
   }
+  function syncPhotoThumb(i) {
+    const thumb = document.querySelector(`[data-thumb="${i}"]`);
+    if (!thumb) return;
+    const url = normalizePhotoURL(data.photos[i]);
+    if (url) {
+      const probe = new Image();
+      probe.onload = () => { thumb.classList.add("has"); thumb.style.backgroundImage = `url("${url}")`; thumb.textContent = ""; };
+      probe.onerror = () => { thumb.classList.remove("has"); thumb.style.backgroundImage = "none"; thumb.textContent = "✕"; };
+      probe.src = url;
+    } else { thumb.classList.remove("has"); thumb.style.backgroundImage = "none"; thumb.textContent = (i+1); }
+  }
 
   // ---------- sync controls' active states ----------
   function syncControls() {
@@ -758,14 +799,12 @@
     document.querySelectorAll("[data-bg]").forEach(b => b.classList.toggle("active", b.dataset.bg === data.bgKey));
     document.querySelectorAll("[data-stem]").forEach(b => b.classList.toggle("active", b.dataset.stem === data.flowerKey));
     document.querySelectorAll("[data-ink]").forEach(b => b.classList.toggle("active", b.dataset.ink === data.stemColor));
+    document.querySelectorAll("[data-rcvcol]").forEach(b => b.classList.toggle("active", b.dataset.rcvcol === data.receiverColor));
+    document.querySelectorAll("[data-sndcol]").forEach(b => b.classList.toggle("active", b.dataset.sndcol === data.senderColor));
     // recolor stem thumbnails to current ink
     document.querySelectorAll("[data-stem] .stem").forEach(s => { s.style.background = data.stemColor; });
     // photo buttons
-    document.querySelectorAll("[data-photo]").forEach(b => {
-      const i = +b.dataset.photo;
-      b.classList.toggle("has", !!data.photos[i]);
-      b.textContent = data.photos[i] ? ("✓ " + (i+1)) : ("+ " + (i+1));
-    });
+   [0,1,2].forEach(syncPhotoThumb);
     // build label + action disabled states
     document.getElementById("build-label").textContent = `Build the bouquet — ${data.stems.length}/9 stems`;
     document.getElementById("btn-add").disabled = data.stems.length >= SLOT_COUNT;
@@ -780,16 +819,52 @@
   }
   function renderAll() {
     // Receiver opened a shared link: show ONLY the card, hide every editor control.
+ function renderReceiver(animated) {
+    const rv = document.getElementById("view-receiver");
+    rv.innerHTML = "";
+    if (animated) {
+      const stage = el("div", { class:"envelope-stage" });
+      const env = el("div", { class:"envelope" });
+      env.innerHTML =
+        '<div class="env-body"></div><div class="env-pocket"></div>' +
+        '<div class="env-flap"></div><div class="env-seal">B</div>' +
+        '<div class="env-hint">tap to open</div>';
+      stage.appendChild(env); rv.appendChild(stage);
+      let opened = false;
+      env.addEventListener("click", () => {
+        if (opened) return; opened = true;
+        env.classList.add("open");
+        setTimeout(() => {
+          rv.innerHTML = "";
+          const wrap = el("div", { class:"reveal-card" });
+          wrap.appendChild(cardEl(false));
+          rv.appendChild(wrap);
+        }, 720);
+      });
+    } else { rv.appendChild(cardEl(false)); }
+  }
+
+  function renderAll() {
     if (FROZEN) {
       document.querySelector(".modes").classList.add("hidden");
       document.getElementById("view-editor").classList.add("hidden");
       document.getElementById("view-widget").classList.add("hidden");
-      const rv = document.getElementById("view-receiver");
-      rv.classList.remove("hidden");
-      const h = document.getElementById("card-host-receiver");
-      h.innerHTML = ""; h.appendChild(cardEl(false));
+      const sub = document.getElementById("subtitle"); if (sub) sub.classList.add("hidden");
+      document.getElementById("view-receiver").classList.remove("hidden");
+      renderReceiver(true);
       return;
     }
+    document.getElementById("view-editor").classList.toggle("hidden", mode !== "editor");
+    document.getElementById("view-receiver").classList.toggle("hidden", mode !== "receiver");
+    document.getElementById("view-widget").classList.toggle("hidden", mode !== "widget");
+    document.getElementById("mode-widget").classList.toggle("hidden", mode === "editor");
+    document.getElementById("mode-editor").classList.toggle("active", mode === "editor");
+    document.getElementById("mode-receiver").classList.toggle("active", mode === "receiver");
+    document.getElementById("mode-widget").classList.toggle("active", mode === "widget");
+    if (mode === "editor") { renderCardOnly(); syncControls(); }
+    else if (mode === "receiver") { renderReceiver(true); }
+    else { const h = document.getElementById("view-widget"); h.innerHTML = ""; h.appendChild(phoneEl()); }
+  }
 
     // mode visibility
     document.getElementById("view-editor").classList.toggle("hidden", mode !== "editor");
@@ -807,35 +882,6 @@
     } else {
       const h = document.getElementById("view-widget"); h.innerHTML = ""; h.appendChild(phoneEl());
     }
-  }
-
-  // ---------- photo upload ----------
-  let activeSlot = 0;
-  const fileInput = document.getElementById("file-input");
-  function pickPhoto(i) { activeSlot = i; fileInput.value = ""; fileInput.click(); }
-  fileInput.addEventListener("change", (e) => {
-    const f = e.target.files && e.target.files[0]; if (!f) return;
-    const r = new FileReader();
-    r.onload = () => { downscalePhoto(r.result, (small) => { data.photos[activeSlot] = small; save(); renderAll(); }); };
-    r.readAsDataURL(f);
-  });
-
-  // Resize a photo to a small JPEG so it travels comfortably inside the share link.
-  function downscalePhoto(dataUrl, cb) {
-    const img = new Image();
-    img.onload = () => {
-      const MAX = 520; // longest edge
-      let { width: w, height: h } = img;
-      if (w > h && w > MAX) { h = Math.round(h * MAX / w); w = MAX; }
-      else if (h >= w && h > MAX) { w = Math.round(w * MAX / h); h = MAX; }
-      const c = document.createElement("canvas");
-      c.width = w; c.height = h;
-      c.getContext("2d").drawImage(img, 0, 0, w, h);
-      try { cb(c.toDataURL("image/jpeg", 0.72)); }
-      catch (err) { cb(dataUrl); }
-    };
-    img.onerror = () => cb(dataUrl);
-    img.src = dataUrl;
   }
 
   // ---------- mode buttons ----------
